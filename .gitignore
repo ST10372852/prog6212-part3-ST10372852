@@ -416,3 +416,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Ignore build outputs for CMCS3
+CMCS3/**/bin/
+CMCS3/**/obj/
+CMCS3/.vs/
