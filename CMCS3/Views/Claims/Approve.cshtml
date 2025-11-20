@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve/Reject Claims</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Your common CSS -->
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="submitClaim.html">Submit Claim</a></li>
+            <li><a href="viewClaims.html">View Claims</a></li>
+            <li><a href="ApproveRejectClaims.html" class="active">Approve/Reject Claims</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <h1>Pending Claims</h1>
+        <table id="claimsTable">
+            <thead>
+                <tr>
+                    <th>Lecturer Name</th>
+                    <th>Claim Period</th>
+                    <th>Total Amount</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Sample row, dynamically replace with backend data -->
+                <tr>
+                    <td>John Doe</td>
+                    <td>Jan 2025</td>
+                    <td>$250</td>
+                    <td>Travel expenses</td>
+                    <td>Pending</td>
+                    <td>
+                        <button class="approve-btn" onclick="approveClaim(this)">Approve</button>
+                        <button class="reject-btn" onclick="rejectClaim(this)">Reject</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <script src="scripts.js"></script>
+</body>
+</html>

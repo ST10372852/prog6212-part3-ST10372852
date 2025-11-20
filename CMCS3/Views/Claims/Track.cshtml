@@ -1,0 +1,54 @@
+@model IEnumerable<CMCS.Models.ClaimViewModel>
+@{
+    ViewData["Title"] = "Track Claims";
+}
+
+<h2>Track Claims</h2>
+
+@if (Model.Any())
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Claim ID</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Submission Date</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var claim in Model)
+            {
+                <tr>
+                    <td>@claim.ClaimId</td>
+                    <td>@claim.Month</td>
+                    <td>@claim.Year</td>
+                    <td>@claim.SubmissionDate.ToShortDateString()</td>
+                    <td>
+                        @{
+                            var badgeClass = claim.Status != null 
+                                ? (claim.Status.Contains("Approved") ? "bg-success" 
+                                   : (claim.Status.Contains("Rejected") ? "bg-danger" : "bg-secondary"))
+                                : "bg-secondary";
+                        }
+                        <span class="badge @badgeClass">
+                            @claim.Status
+                        </span>
+                    </td>
+                    <td>@claim.TotalAmount.ToString("C")</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary me-1" asp-controller="Documents" asp-action="Upload" asp-route-id="@claim.ClaimId">Upload</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Claims" asp-action="Details" asp-route-id="@claim.ClaimId">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No claims submitted yet.</p>
+}

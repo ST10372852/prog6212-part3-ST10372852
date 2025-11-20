@@ -1,0 +1,45 @@
+﻿@model System.Collections.IList
+@{
+    ViewData["Title"] = "Approve Claims";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2>Pending Claims (Coordinator / Manager View)</h2>
+        <p class="text-muted">Use Approve / Reject to change claim status (prototype only).</p>
+
+        <table class="table">
+            <thead class="table-light"><tr><th>Claim ID</th><th>Lecturer</th><th>Period</th><th>Total</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @if (Model == null)
+                {
+                    <tr><td colspan="6">No claims in system.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var c = item as CMCS.Models.ClaimViewModel;
+                        <tr>
+                            <td>@c.ClaimID</td>
+                            <td>Sample Lecturer</td>
+                            <td>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(c.Month) @c.Year</td>
+                            <td>@string.Format("{0:N2}", c.TotalAmount)</td>
+                            <td><span class="badge @(c.Status == "Pending" ? "bg-warning text-dark" : (c.Status == "Approved" ? "bg-success" : "bg-danger"))">@c.Status</span></td>
+                            <td>
+                                <form method="post" asp-action="Approve" class="d-inline">
+                                    <input type="hidden" name="id" value="@c.ClaimID" />
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form method="post" asp-action="Reject" class="d-inline ms-1">
+                                    <input type="hidden" name="id" value="@c.ClaimID" />
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

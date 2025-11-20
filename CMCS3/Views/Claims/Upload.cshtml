@@ -1,0 +1,35 @@
+﻿@model CMCS.Models.ClaimViewModel
+@{
+    ViewData["Title"] = "Upload Documents";
+}
+
+<h2>Upload Supporting Documents</h2>
+
+<form asp-action="Upload" asp-route-id="@Model.ClaimId" method="post" enctype="multipart/form-data" id="uploadForm">
+    <div class="mb-3">
+        <label for="fileInput" class="form-label fw-bold">Upload Document</label>
+        <input asp-for="NewFiles" type="file" multiple class="form-control" id="fileInput" />
+    </div>
+
+    <div id="dropZone" class="border border-2 border-secondary rounded p-4 text-center mb-3">
+        <p class="mb-0">Drag & drop files here</p>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Upload Document</button>
+</form>
+
+<hr />
+<h5>Uploaded Files</h5>
+@if (Model.UploadedFiles.Any())
+{
+    <ul class="list-group">
+        @foreach (var file in Model.UploadedFiles)
+        {
+            <li class="list-group-item">@file</li>
+        }
+    </ul>
+}
+else
+{
+    <p class="text-muted">No files uploaded yet.</p>
+}

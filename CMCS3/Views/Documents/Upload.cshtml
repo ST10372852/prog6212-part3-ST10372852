@@ -1,0 +1,97 @@
+@model CMCS.Models.ClaimViewModel
+@{
+    ViewData["Title"] = "Upload Document";
+}
+
+<h2>Upload Supporting Document for Claim @Model.ClaimId</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+
+<form id="uploadForm" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="id" value="@Model.ClaimId" />
+    <div class="mb-3">
+        <label for="fileInput" class="form-label">Choose file (.pdf, .docx, .xlsx) - max 5MB</label>
+        <input type="file" name="file" class="form-control" id="fileInput" />
+    </div>
+
+    <div class="mb-3" id="progressContainer" style="display:none;">
+        <label class="form-label">Upload progress</label>
+        <div class="progress">
+          <div id="uploadProgress" class="progress-bar" role="progressbar" style="width:0%">0%</div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" type="button" id="uploadBtn">Upload</button>
+    <a class="btn btn-secondary" asp-controller="Claims" asp-action="Details" asp-route-id="@Model.ClaimId">Back</a>
+</form>
+
+<script>
+document.getElementById('uploadBtn').addEventListener('click', function() {
+    var fileInput = document.getElementById('fileInput');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose a file first.');
+        return;
+    }
+    var file = fileInput.files[0];
+    var allowed = ['.pdf', '.docx', '.xlsx'];
+    var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (allowed.indexOf(ext) === -1) {
+        alert('Invalid file type. Only .pdf, .docx, .xlsx are allowed.');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File too large. Max 5 MB.');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('id', '@Model.ClaimId');
+    formData.append('file', file);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '@Url.Action("UploadFile","Documents")', true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.upload.addEventListener('progress', function(e) {
+        var container = document.getElementById('progressContainer');
+        container.style.display = 'block';
+        if (e.lengthComputable) {
+            var percent = Math.round((e.loaded / e.total) * 100);
+            var bar = document.getElementById('uploadProgress');
+            bar.style.width = percent + '%';
+            bar.textContent = percent + '%';
+        }
+    });
+
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (data && data.success) {
+                    window.location = data.redirect;
+                } else {
+                    // fallback: reload page
+                    location.reload();
+                }
+            } catch (ex) {
+                location.reload();
+            }
+        } else {
+            alert('Upload failed. Server returned status ' + xhr.status);
+        }
+    };
+
+    xhr.onerror = function() {
+        alert('Upload failed due to a network error.');
+    };
+
+    xhr.send(formData);
+});
+</script>

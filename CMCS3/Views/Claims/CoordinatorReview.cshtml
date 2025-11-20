@@ -1,0 +1,40 @@
+﻿@model IEnumerable<CMCS.Models.ClaimViewModel>
+@{
+    ViewData["Title"] = "Coordinator Review";
+}
+
+<h2>Coordinator Review - Pending Claims</h2>
+
+@if (Model.Any(c => c.Status == "Submitted"))
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Lecturer</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Total Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var claim in Model.Where(c => c.Status == "Submitted"))
+            {
+                <tr>
+                    <td>LecturerName</td> <!-- placeholder -->
+                    <td>@claim.Month</td>
+                    <td>@claim.Year</td>
+                    <td>@claim.TotalAmount.ToString("C")</td>
+                    <td>
+                        <a class="btn btn-success btn-sm" asp-action="CoordinatorApprove" asp-route-id="@claim.ClaimId">Approve</a>
+                        <a class="btn btn-danger btn-sm" asp-action="CoordinatorReject" asp-route-id="@claim.ClaimId">Reject</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No pending claims for coordinator review.</p>
+}

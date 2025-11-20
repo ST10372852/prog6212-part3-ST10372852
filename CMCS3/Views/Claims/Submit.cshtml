@@ -1,0 +1,43 @@
+﻿@model CMCS.Models.ClaimViewModel
+@{
+    ViewData["Title"] = "Submit Claim";
+}
+
+<h2>Submit Claim</h2>
+
+<form asp-action="Submit" method="post">
+    <input type="hidden" asp-for="ClaimId" />
+
+    <div class="mb-3">
+        <label asp-for="Month" class="form-label">Month</label>
+        <input asp-for="Month" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Year" class="form-label">Year</label>
+        <input asp-for="Year" class="form-control" />
+    </div>
+
+    <h5>Claim Lines</h5>
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Module</th>
+                <th>Hours</th>
+                <th>Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Lines.Count; i++)
+            {
+                <tr>
+                    <td><input asp-for="Lines[i].Module" class="form-control" /></td>
+                    <td><input asp-for="Lines[i].Hours" class="form-control" /></td>
+                    <td><input asp-for="Lines[i].Rate" class="form-control" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Submit Claim</button>
+</form>
