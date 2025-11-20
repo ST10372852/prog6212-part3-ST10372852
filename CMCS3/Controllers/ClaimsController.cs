@@ -181,8 +181,16 @@ namespace CMCS.Controllers
             claim.ValidationIssues = issues.ToList();
             if (issues.Length == 0)
             {
-                claim.Status = "CoordinatorApproved";
-                TempData["Message"] = "Claim auto-verified and approved by Coordinator.";
+                // Auto-approve only when there are no validation issues AND total amount is greater than 1500
+                if (claim.TotalAmount > 1500m)
+                {
+                    claim.Status = "CoordinatorApproved";
+                    TempData["Message"] = "Claim auto-verified and approved by Coordinator.";
+                }
+                else
+                {
+                    TempData["Warning"] = "Claim did not meet auto-verify threshold for Coordinator.";
+                }
             }
             else
             {
@@ -198,7 +206,8 @@ namespace CMCS.Controllers
             var claim = _claims[id];
             var issues = ClaimValidator.Validate(claim);
             claim.ValidationIssues = issues.ToList();
-            if (issues.Length == 0 && claim.TotalAmount <= 10000m)
+            // Auto-approve only when there are no validation issues AND total amount is greater than 1500
+            if (issues.Length == 0 && claim.TotalAmount > 1500m)
             {
                 claim.Status = "ManagerApproved";
                 TempData["Message"] = "Claim auto-verified and approved by Manager.";

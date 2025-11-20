@@ -5,6 +5,20 @@
 
 <h2>Coordinator Review - Pending Claims</h2>
 
+@* Display action results *@
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+else if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning">@TempData["Warning"]</div>
+}
+else if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
 @if (Model.Any(c => c.Status == "Submitted"))
 {
     <table class="table table-bordered table-striped">
@@ -29,6 +43,7 @@
                                 <a class="btn btn-success btn-sm" asp-action="CoordinatorApprove" asp-route-id="@claim.ClaimId">Approve</a>
                                 <a class="btn btn-danger btn-sm" asp-action="CoordinatorReject" asp-route-id="@claim.ClaimId">Reject</a>
                                 <a class="btn btn-outline-primary btn-sm ms-1" asp-action="CoordinatorAutoVerify" asp-route-id="@claim.ClaimId">Auto-Verify</a>
+                                <small class="text-muted ms-2">Criteria: no validation issues and Total &gt; 1500</small>
                                 @{
                                     var map = ViewData["ValidationResults"] as Dictionary<int, string[]>;
                                     if (map != null && map.ContainsKey(claim.ClaimId) && map[claim.ClaimId].Any())
