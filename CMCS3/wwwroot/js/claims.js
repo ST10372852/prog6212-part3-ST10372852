@@ -13,7 +13,7 @@
             row.querySelector('.line-total').textContent = lineTotal.toFixed(2);
             total += lineTotal;
         });
-        totalAmountEl.textContent = total.toFixed(2);
+        if (totalAmountEl) totalAmountEl.textContent = total.toFixed(2);
     }
 
     function attachRowEvents(row) {
@@ -35,7 +35,7 @@
             row.querySelectorAll('input').forEach(input => {
                 const name = input.getAttribute('name') || '';
                 if (!name) return;
-                const newName = name.replace(/Lines\[\d+\]/, `Lines[${index}]`);
+                const newName = name.replace(/Lines\[\d+\]\.?/, `Lines[${index}].`);
                 input.setAttribute('name', newName);
             });
         });
@@ -46,7 +46,7 @@
         const tr = document.createElement('tr');
         tr.classList.add('claim-line-row');
         tr.innerHTML = `
-            <td><input name="Lines[${index}].ModuleName" class="form-control" placeholder="Module/Activity" /></td>
+            <td><input name="Lines[${index}].Module" class="form-control" placeholder="Module/Activity" /></td>
             <td><input name="Lines[${index}].Hours" type="number" min="0" class="form-control hours-input" /></td>
             <td><input name="Lines[${index}].Rate" type="number" step="0.01" min="0" class="form-control rate-input" /></td>
             <td class="line-total align-middle">0.00</td>

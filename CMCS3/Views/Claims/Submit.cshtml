@@ -6,16 +6,27 @@
 <h2>Submit Claim</h2>
 
 <form asp-action="Submit" method="post">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="ClaimId" />
 
-    <div class="mb-3">
-        <label asp-for="Month" class="form-label">Month</label>
-        <input asp-for="Month" class="form-control" />
-    </div>
+    <div id="clientValidationMessage" class="alert alert-danger d-none"></div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
-        <label asp-for="Year" class="form-label">Year</label>
-        <input asp-for="Year" class="form-control" />
+        <label asp-for="LecturerName" class="form-label">Lecturer</label>
+        <input asp-for="LecturerName" class="form-control" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Month" class="form-label">Month</label>
+            <input asp-for="Month" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Year" class="form-label">Year</label>
+            <input asp-for="Year" class="form-control" />
+        </div>
     </div>
 
     <h5>Claim Lines</h5>
@@ -25,19 +36,154 @@
                 <th>Module</th>
                 <th>Hours</th>
                 <th>Rate</th>
+                <th>Line Total</th>
+                <th></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="linesBody">
             @for (int i = 0; i < Model.Lines.Count; i++)
             {
-                <tr>
-                    <td><input asp-for="Lines[i].Module" class="form-control" /></td>
-                    <td><input asp-for="Lines[i].Hours" class="form-control" /></td>
-                    <td><input asp-for="Lines[i].Rate" class="form-control" /></td>
+                <tr class="claim-line-row">
+                    <td>
+                        <input name="Lines[@i].Module" value="@Model.Lines[i].Module" class="form-control module-input" />
+                    </td>
+                    <td>
+                        <input name="Lines[@i].Hours" value="@Model.Lines[i].Hours" type="number" min="0" class="form-control hours-input" />
+                    </td>
+                    <td>
+                        <input name="Lines[@i].Rate" value="@Model.Lines[i].Rate" type="number" step="0.01" min="0" class="form-control rate-input" />
+                    </td>
+                    <td class="line-total align-middle">@Model.Lines[i].LineTotal.ToString("F2")</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger remove-line-btn">&times;</button></td>
                 </tr>
             }
         </tbody>
     </table>
 
-    <button type="submit" class="btn btn-primary">Submit Claim</button>
+    <div class="mb-3">
+        <button id="addLineBtn" type="button" class="btn btn-secondary">Add Line</button>
+        <span class="ms-3">Total: <strong id="totalAmount">@Model.TotalAmount.ToString("F2")</strong></span>
+    </div>
+
+    <button id="submitBtn" type="submit" class="btn btn-primary">Submit Claim</button>
 </form>
+
+<script>
+(function(){
+    const maxHours = 200;
+    const maxRate = 1000.0;
+
+    function toNumber(v){
+        const n = parseFloat(v);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function recalcRow(row){
+        const hoursInput = row.querySelector('.hours-input');
+        const rateInput = row.querySelector('.rate-input');
+        const totalCell = row.querySelector('.line-total');
+        const hours = toNumber(hoursInput.value);
+        const rate = toNumber(rateInput.value);
+        const total = hours * rate;
+        totalCell.textContent = total.toFixed(2);
+        return { hours, rate, total };
+    }
+
+    function recalcAll(){
+        const rows = Array.from(document.querySelectorAll('#linesBody .claim-line-row'));
+        let grand = 0;
+        let hasInvalid = false;
+        const issues = [];
+        rows.forEach((r, idx) => {
+            const { hours, rate, total } = recalcRow(r);
+            grand += total;
+            // validation
+            const hoursInput = r.querySelector('.hours-input');
+            const rateInput = r.querySelector('.rate-input');
+            hoursInput.classList.remove('is-invalid');
+            rateInput.classList.remove('is-invalid');
+
+            if (hours < 0 || hours > maxHours){
+                hoursInput.classList.add('is-invalid');
+                hasInvalid = true;
+                issues.push(`Line ${idx+1}: Hours must be between 0 and ${maxHours}`);
+            }
+            if (rate < 0 || rate > maxRate){
+                rateInput.classList.add('is-invalid');
+                hasInvalid = true;
+                issues.push(`Line ${idx+1}: Rate must be between 0 and ${maxRate}`);
+            }
+        });
+
+        document.getElementById('totalAmount').textContent = grand.toFixed(2);
+
+        const clientMsg = document.getElementById('clientValidationMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        if (hasInvalid){
+            clientMsg.textContent = issues.join('; ');
+            clientMsg.classList.remove('d-none');
+            submitBtn.disabled = true;
+        } else {
+            clientMsg.textContent = '';
+            clientMsg.classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+    }
+
+    function reindexRows(){
+        const rows = Array.from(document.querySelectorAll('#linesBody .claim-line-row'));
+        rows.forEach((r, idx) => {
+            const moduleInput = r.querySelector('.module-input');
+            const hoursInput = r.querySelector('.hours-input');
+            const rateInput = r.querySelector('.rate-input');
+            moduleInput.name = `Lines[${idx}].Module`;
+            hoursInput.name = `Lines[${idx}].Hours`;
+            rateInput.name = `Lines[${idx}].Rate`;
+        });
+    }
+
+    function attachListeners(row){
+        const hoursInput = row.querySelector('.hours-input');
+        const rateInput = row.querySelector('.rate-input');
+        hoursInput.addEventListener('input', () => { recalcAll(); });
+        rateInput.addEventListener('input', () => { recalcAll(); });
+    }
+
+    function addLine(){
+        const tbody = document.getElementById('linesBody');
+        const idx = tbody.querySelectorAll('.claim-line-row').length;
+        const tr = document.createElement('tr');
+        tr.className = 'claim-line-row';
+        tr.innerHTML = `\
+            <td>\n                <input name="Lines[${idx}].Module" class="form-control module-input" />\n            </td>\n            <td>\n                <input name="Lines[${idx}].Hours" value="0" type="number" min="0" class="form-control hours-input" />\n            </td>\n            <td>\n                <input name="Lines[${idx}].Rate" value="0.00" type="number" step="0.01" min="0" class="form-control rate-input" />\n            </td>\n            <td class="line-total align-middle">0.00</td>\n            <td><button type="button" class="btn btn-sm btn-outline-danger remove-line-btn">&times;</button></td>\n        `;
+        tbody.appendChild(tr);
+        attachListeners(tr);
+        recalcAll();
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        // attach to existing
+        document.querySelectorAll('#linesBody .claim-line-row').forEach(r => attachListeners(r));
+
+        // add line
+        document.getElementById('addLineBtn').addEventListener('click', function(){
+            addLine();
+            reindexRows();
+        });
+
+        // remove line (delegate)
+        document.getElementById('linesBody').addEventListener('click', function(e){
+            if (e.target && e.target.matches('.remove-line-btn')){
+                const row = e.target.closest('.claim-line-row');
+                row.remove();
+                reindexRows();
+                recalcAll();
+            }
+        });
+
+        // initial calculation
+        reindexRows();
+        recalcAll();
+    });
+})();
+</script>

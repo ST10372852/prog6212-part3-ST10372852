@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ComponentModel.DataAnnotations;
 
 namespace CMCS.Models
 {
@@ -14,6 +15,9 @@ namespace CMCS.Models
 
         public int Month { get; set; }
         public int Year { get; set; }
+
+        [Required(ErrorMessage = "Lecturer name is required")]
+        public string LecturerName { get; set; } = "LecturerName";
 
         public DateTime SubmissionDate { get; set; } = DateTime.Now;
 
@@ -30,5 +34,7 @@ namespace CMCS.Models
         // Detailed document info with stored paths
         public List<DocumentViewModel> Documents { get; set; } = new List<DocumentViewModel>();
         public List<IFormFile> NewFiles { get; set; }
+        // Validation/automation feedback stored on the claim for review
+        public List<string> ValidationIssues { get; set; } = new List<string>();
     }
 }

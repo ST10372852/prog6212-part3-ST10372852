@@ -3,6 +3,7 @@ using CMCS.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CMCS.Services;
 
 namespace CMCS.Controllers
 {
@@ -30,11 +31,31 @@ namespace CMCS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Submit(ClaimViewModel model)
         {
+            // Run server-side validation and automation checks
+            var issues = ClaimValidator.Validate(model);
+            model.ValidationIssues = issues.ToList();
+
+            if (issues.Length > 0 || !ModelState.IsValid)
+            {
+                // Keep the model in store so user can correct
+                if (!_claims.ContainsKey(model.ClaimId))
+                {
+                    _claims[model.ClaimId] = model;
+                }
+                else
+                {
+                    _claims[model.ClaimId] = model;
+                }
+                TempData["Error"] = "Validation issues found. Please review and resubmit.";
+                return View(model);
+            }
+
             if (_claims.ContainsKey(model.ClaimId))
             {
                 _claims[model.ClaimId] = model;
             }
 
+            TempData["Message"] = "Claim submitted successfully.";
             return RedirectToAction("Track");
         }
 
@@ -94,7 +115,14 @@ namespace CMCS.Controllers
         [HttpGet]
         public IActionResult CoordinatorReview()
         {
-            return View(_claims.Values.ToList());
+            var claims = _claims.Values.ToList();
+            var results = new Dictionary<int, string[]>();
+            foreach (var c in claims)
+            {
+                results[c.ClaimId] = ClaimValidator.Validate(c);
+            }
+            ViewData["ValidationResults"] = results;
+            return View(claims);
         }
 
         [HttpGet]
@@ -102,7 +130,20 @@ namespace CMCS.Controllers
         {
             if (_claims.ContainsKey(id))
             {
-                _claims[id].Status = "CoordinatorApproved";
+                var claim = _claims[id];
+                // Automated verification before approving
+                var issues = ClaimValidator.Validate(claim);
+                claim.ValidationIssues = issues.ToList();
+                if (issues.Length == 0)
+                {
+                    claim.Status = "CoordinatorApproved";
+                    TempData["Message"] = $"Claim {id} automatically approved by Coordinator.";
+                }
+                else
+                {
+                    claim.Status = "CoordinatorFlagged";
+                    TempData["Error"] = $"Claim {id} flagged: {string.Join("; ", issues)}";
+                }
             }
             return RedirectToAction("CoordinatorReview");
         }
@@ -121,7 +162,52 @@ namespace CMCS.Controllers
         [HttpGet]
         public IActionResult ManagerApproval()
         {
-            return View(_claims.Values.ToList());
+            var claims = _claims.Values.ToList();
+            var results = new Dictionary<int, string[]>();
+            foreach (var c in claims)
+            {
+                results[c.ClaimId] = ClaimValidator.Validate(c);
+            }
+            ViewData["ValidationResults"] = results;
+            return View(claims);
+        }
+
+        [HttpGet]
+        public IActionResult CoordinatorAutoVerify(int id)
+        {
+            if (!_claims.ContainsKey(id)) return NotFound();
+            var claim = _claims[id];
+            var issues = ClaimValidator.Validate(claim);
+            claim.ValidationIssues = issues.ToList();
+            if (issues.Length == 0)
+            {
+                claim.Status = "CoordinatorApproved";
+                TempData["Message"] = "Claim auto-verified and approved by Coordinator.";
+            }
+            else
+            {
+                TempData["Warning"] = string.Join("; ", issues);
+            }
+            return RedirectToAction("CoordinatorReview");
+        }
+
+        [HttpGet]
+        public IActionResult ManagerAutoVerify(int id)
+        {
+            if (!_claims.ContainsKey(id)) return NotFound();
+            var claim = _claims[id];
+            var issues = ClaimValidator.Validate(claim);
+            claim.ValidationIssues = issues.ToList();
+            if (issues.Length == 0 && claim.TotalAmount <= 10000m)
+            {
+                claim.Status = "ManagerApproved";
+                TempData["Message"] = "Claim auto-verified and approved by Manager.";
+            }
+            else
+            {
+                TempData["Warning"] = string.Join("; ", issues);
+            }
+            return RedirectToAction("ManagerApproval");
         }
 
         [HttpGet]
@@ -129,7 +215,20 @@ namespace CMCS.Controllers
         {
             if (_claims.ContainsKey(id))
             {
-                _claims[id].Status = "ManagerApproved";
+                var claim = _claims[id];
+                // Manager-level automated checks (stricter)
+                var issues = ClaimValidator.Validate(claim);
+                claim.ValidationIssues = issues.ToList();
+                if (issues.Length == 0 && claim.TotalAmount <= 10000m)
+                {
+                    claim.Status = "ManagerApproved";
+                    TempData["Message"] = $"Claim {id} approved by Manager.";
+                }
+                else
+                {
+                    claim.Status = "ManagerFlagged";
+                    TempData["Error"] = $"Claim {id} requires manual review: {string.Join("; ", issues)}";
+                }
             }
             return RedirectToAction("ManagerApproval");
         }

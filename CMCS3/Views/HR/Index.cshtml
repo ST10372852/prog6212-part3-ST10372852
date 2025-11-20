@@ -1,0 +1,84 @@
+@model IEnumerable<CMCS.Models.ClaimViewModel>
+@{
+    ViewData["Title"] = "HR Dashboard";
+    var approved = Model?.Where(c => c.Status == "ManagerApproved" || c.Status == "Approved").ToList() ?? new List<CMCS.Models.ClaimViewModel>();
+    var pending = Model?.Where(c => c.Status != "ManagerApproved" && c.Status != "Approved").ToList() ?? new List<CMCS.Models.ClaimViewModel>();
+    var totalPayout = approved.Sum(c => c.TotalAmount);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>HR Dashboard � Claims & Payments</h2>
+    <div>
+        <a class="btn btn-outline-secondary me-2" asp-action="Index">Refresh</a>
+        <a class="btn btn-primary" asp-action="ExportApprovedCsv">Export Approved CSV</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Approved Claims</h5>
+                <p class="card-text display-6">@approved.Count()</p>
+                <p class="card-subtitle text-muted">Ready for payment processing</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Payout</h5>
+                <p class="card-text display-6">@totalPayout.ToString("C")</p>
+                <p class="card-subtitle text-muted">Sum of approved claim amounts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-bg-light mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Pending / Other</h5>
+                <p class="card-text display-6">@pending.Count()</p>
+                <p class="card-subtitle text-muted">Claims requiring attention</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!approved.Any())
+{
+    <div class="alert alert-info">No approved claims available for export.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Claim</th>
+                    <th>Lecturer</th>
+                    <th>Submitted</th>
+                    <th>Period</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in approved)
+                {
+                    <tr>
+                        <td>#@c.ClaimId</td>
+                        <td>@c.LecturerName</td>
+                        <td>@c.SubmissionDate.ToString("yyyy-MM-dd")</td>
+                        <td>@c.Month/@c.Year</td>
+                        <td>@c.TotalAmount.ToString("C")</td>
+                        <td><span class="badge bg-success">@c.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="mt-3">
+    <a class="btn btn-outline-primary" asp-action="ExportApprovedCsv">Download CSV of Approved Claims</a>
+</div>

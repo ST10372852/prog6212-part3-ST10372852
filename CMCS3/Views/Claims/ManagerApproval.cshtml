@@ -21,13 +21,21 @@
             @foreach (var claim in Model.Where(c => c.Status == "CoordinatorApproved"))
             {
                 <tr>
-                    <td>LecturerName</td> <!-- placeholder -->
+                    <td>@claim.LecturerName</td>
                     <td>@claim.Month</td>
                     <td>@claim.Year</td>
                     <td>@claim.TotalAmount.ToString("C")</td>
                     <td>
                         <a class="btn btn-success btn-sm" asp-action="ManagerApprove" asp-route-id="@claim.ClaimId">Approve</a>
                         <a class="btn btn-danger btn-sm" asp-action="ManagerReject" asp-route-id="@claim.ClaimId">Reject</a>
+                        <a class="btn btn-outline-primary btn-sm ms-1" asp-action="ManagerAutoVerify" asp-route-id="@claim.ClaimId">Auto-Verify</a>
+                        @{
+                            var map = ViewData["ValidationResults"] as Dictionary<int, string[]>;
+                            if (map != null && map.ContainsKey(claim.ClaimId) && map[claim.ClaimId].Any())
+                            {
+                                <div class="mt-2 text-warning small">@string.Join("; ", map[claim.ClaimId])</div>
+                            }
+                        }
                     </td>
                 </tr>
             }
